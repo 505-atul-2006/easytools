@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Easy Tools - File Converter</title>
+  <style>
+    :root {
+      --bg: linear-gradient(135deg,#e0eafc, #cfdef3);
+      --fg: #222;
+      --box: #ffffffee;
+    }
+    [data-theme="dark"] {
+      --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      --fg: #f1f1f1;
+      --box: #1e1e1e;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      transition: background 0.5s, color 0.5s;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 30px;
+      background: var(--box);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+    .logo img {
+      height: 70px;
+      /* margin-right: 10px; */
+    }
+    .logo span {
+      font-size: 1.5em;
+      font-weight: bold;
+      /* color: var(--fg); */
+      font-family: cursive;
+      color: #899499;
+    }
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .nav-right a {
+      text-decoration: none;
+      color: var(--fg);
+      font-weight: bold;
+      transition: color 0.3s;
+    }
+    .nav-right a:hover {
+      color: #007bff;
+    }
+    .toggle-theme {
+      background: none;
+      border: 2px solid var(--fg);
+      color: var(--fg);
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    main {
+      text-align: center;
+      padding: 40px 20px 20px;
+    }
+    main h1 {
+      font-size: 2.5em;
+      margin-bottom: 30px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 0 40px 40px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .tool-box {
+      background: var(--box);
+      border: 2px solid #dee2e6;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      font-weight: bold;
+      color: var(--fg);
+      cursor: pointer;
+      transition: transform 0.3s ease, background 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .tool-box:hover {
+      transform: translateY(-5px);
+      background-color: rgba(0, 255, 34, 0.1);
+    }
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <img src="logo.jpg" alt="Logo">
+      <span>Easy Tools</span>
+    </div>
+    <div class="nav-right">
+      <a href="mail-to:505atulkumar@gmail.com"> Contact</a>
+      <button class="toggle-theme" onclick="toggleTheme()">🌓Dark mode</button>
+    </div>
+  </header>
+
+  <main>
+    <h1 style="font-family: cursive;color:	#ff14e7 ;">💖Welcome💖</h1>
+    <div class="grid">
+      <a href="compress.html"><div class="tool-box">✅ Image Compressor</div></a>
+      <a href="pdf compress.html"><div class="tool-box">✅ PDF Compressor</div></a>
+      <a href="image to pdf.html"><div class="tool-box">✅ Image to PDF Converter</div></a>
+      <a href="pdf to jpeg.html"><div class="tool-box">✅ PDF to JPEG Converter</div></a>
+      <a href="jpeg to pdf.html"><div class="tool-box">✅ JPEG to PDF</div></a>
+      <a href="pdf merger.html"><div class="tool-box">✅ PDF Merger</div></a>
+      <a href="png to jpeg.html"><div class="tool-box">✅ PNG to JPG</div></a>
+      <a href="jpeg to png.html"><div class="tool-box">✅ JPG to PNG</div></a>
+      <a href="split pdf.html"><div class="tool-box">✅ PDF Splitter</div></a>
+    </div>
+  </main>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    }
+  </script>
+</body>
+</html>

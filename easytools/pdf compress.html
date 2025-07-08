@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Compressor</title>
+  <style>
+    :root {
+      --bg: linear-gradient(135deg, #e0eafc, #cfdef3);
+      --fg: #222;
+      --box: #ffffffee;
+    }
+    [data-theme="dark"] {
+      --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      --fg: #f8f9fa;
+      --box: #1e1e1e;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+    .container {
+      background: var(--box);
+      border-radius: 20px;
+      padding: 40px 30px;
+      max-width: 600px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+    .drop-zone {
+      border: 2px dashed var(--fg);
+      padding: 40px 20px;
+      margin: 15px 0;
+      border-radius: 10px;
+      background: transparent;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+    .drop-zone:hover {
+      background-color: rgba(0,0,0,0.05);
+    }
+    input[type=file], input[type=number] {
+      display: block;
+      margin: 10px auto;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 80%;
+    }
+    button {
+      padding: 12px 25px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #downloadLink {
+      display: none;
+      margin-top: 20px;
+      font-weight: bold;
+      color: #28a745;
+      text-decoration: none;
+    }
+    .toggle-theme {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: 2px solid var(--fg);
+      color: var(--fg);
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    #previewPDF {
+      max-width: 200px;
+      max-height: 200px;
+      margin-top: 15px;
+      border-radius: 10px;
+      display: none;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    #errorMessage {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+      display: none;
+    }
+    #loading {
+      display: none;
+      margin: 15px 0;
+    }
+    #progressBar {
+      width: 80%;
+      margin: 10px auto;
+      height: 10px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    #progress {
+      height: 100%;
+      background-color: #007bff;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .info-text {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 5px;
+    }
+    [data-theme="dark"] .info-text {
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <button class="toggle-theme" onclick="toggleTheme()">🌓Dark mode</button>
+  <div class="container">
+    <h2>📉 PDF Compressor</h2>
+    <div class="drop-zone" onclick="document.getElementById('pdfInput').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+      Drag & Drop PDF here or click to select
+    </div>
+    <input type="file" id="pdfInput" accept="application/pdf">
+    <input type="number" id="targetSize" placeholder="🎯 Desired size in KB (e.g. 500)" min="10" step="10">
+    <div class="info-text">For best results, try a target size at least 30% smaller than original</div>
+    <div id="progressBar"><div id="progress"></div></div>
+    <button onclick="compressPDF()">Compress PDF</button>
+    <button onclick="clearPDF()">Clear</button>
+    <div id="errorMessage"></div>
+    <div id="loading">Compressing... Please wait</div>
+    <br>
+    <iframe id="previewPDF"></iframe>
+    <a id="downloadLink">Download Compressed PDF</a>
+  </div>
+
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://unpkg.com/downloadjs@1.4.7"></script>
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      const button = document.querySelector('.toggle-theme');
+      if (html.dataset.theme === 'dark') {
+        html.dataset.theme = 'light';
+        button.textContent = '🌓Dark mode';
+      } else {
+        html.dataset.theme = 'dark';
+        button.textContent = '🌓Light mode';
+      }
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('pdfInput').files = e.dataTransfer.files;
+      updatePreview();
+    }
+
+    document.getElementById('pdfInput').addEventListener('change', updatePreview);
+
+    function updatePreview() {
+      const input = document.getElementById('pdfInput');
+      if (input.files.length) {
+        const file = input.files[0];
+        const fileURL = URL.createObjectURL(file);
+        const preview = document.getElementById('previewPDF');
+        preview.src = fileURL;
+        preview.style.display = 'block';
+      }
+    }
+
+    function clearPDF() {
+      document.getElementById('pdfInput').value = '';
+      document.getElementById('downloadLink').style.display = 'none';
+      const preview = document.getElementById('previewPDF');
+      preview.style.display = 'none';
+      preview.src = '';
+      document.getElementById('targetSize').value = '';
+      document.getElementById('errorMessage').style.display = 'none';
+      document.getElementById('progress').style.width = '0%';
+    }
+
+    function updateProgress(percent) {
+      document.getElementById('progress').style.width = percent + '%';
+    }
+
+    async function compressPDF() {
+      const input = document.getElementById('pdfInput');
+      const targetSizeKB = parseInt(document.getElementById('targetSize').value);
+      const errorDiv = document.getElementById('errorMessage');
+      const loadingDiv = document.getElementById('loading');
+      
+      errorDiv.style.display = 'none';
+      loadingDiv.style.display = 'block';
+      updateProgress(0);
+
+      if (!input.files.length || !targetSizeKB) {
+        errorDiv.textContent = "Please upload a PDF and set desired size in KB.";
+        errorDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        return;
+      }
+
+      const file = input.files[0];
+      const originalSizeKB = file.size / 1024;
+
+      if (originalSizeKB <= targetSizeKB) {
+        errorDiv.textContent = "⚠️ This file can't be compressed more than its actual size.";
+        errorDiv.style.display = 'block';
+        loadingDiv.style.display = 'none';
+        return;
+      }
+
+      try {
+        updateProgress(10);
+        const arrayBuffer = await file.arrayBuffer();
+        let pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+        updateProgress(20);
+        
+        let compressedPdf = await PDFLib.PDFDocument.create();
+        const pages = await compressedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+        
+        for (const page of pages) {
+          compressedPdf.addPage(page);
+        }
+
+        let pdfBytes = await compressedPdf.save({
+          useObjectStreams: true,
+          useCompression: true
+        });
+
+        updateProgress(40);
+        let currentSizeKB = pdfBytes.byteLength / 1024;
+
+        if (currentSizeKB > targetSizeKB) {
+          updateProgress(50);
+          pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+          compressedPdf = await PDFLib.PDFDocument.create();
+          const pages2 = await compressedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+          
+          for (const page of pages2) {
+            compressedPdf.addPage(page);
+          }
+
+          pdfBytes = await compressedPdf.save({
+            useObjectStreams: true,
+            useCompression: true,
+            ignoreAcroFormErrors: true,
+            ignoreInvalidAnnotations: true
+          });
+
+          updateProgress(70);
+          currentSizeKB = pdfBytes.byteLength / 1024;
+        }
+
+        if (currentSizeKB > targetSizeKB) {
+          updateProgress(80);
+          pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+          compressedPdf = await PDFLib.PDFDocument.create();
+          const pages3 = await compressedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+
+          for (const page of pages3) {
+            const { width, height } = page.getSize();
+            const embeddedPage = await compressedPdf.embedPage(page);
+            const newPage = compressedPdf.addPage([width * 0.95, height * 0.95]);
+            newPage.drawPage(embeddedPage, {
+              x: 0,
+              y: 0,
+              width: width * 0.95,
+              height: height * 0.95,
+            });
+          }
+
+          pdfBytes = await compressedPdf.save({
+            useObjectStreams: true,
+            useCompression: true,
+            ignoreAcroFormErrors: true
+          });
+
+          updateProgress(90);
+          currentSizeKB = pdfBytes.byteLength / 1024;
+        }
+
+        updateProgress(100);
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const compressedSizeKB = blob.size / 1024;
+
+        const url = URL.createObjectURL(blob);
+        document.getElementById('previewPDF').src = url;
+        document.getElementById('previewPDF').style.display = 'block';
+
+        const link = document.getElementById('downloadLink');
+        link.href = url;
+        link.download = 'compressed_' + file.name;
+        link.style.display = 'inline-block';
+        link.textContent = `Download (${Math.round(compressedSizeKB)} KB, ${Math.round((originalSizeKB - compressedSizeKB) / originalSizeKB * 100)}% smaller)`;
+
+        if (compressedSizeKB > targetSizeKB) {
+          errorDiv.textContent = `⚠️ Could not compress to target size of ${targetSizeKB} KB. Best achieved: ${Math.round(compressedSizeKB)} KB (${Math.round((originalSizeKB - compressedSizeKB) / originalSizeKB * 100)}% reduction)`;
+          errorDiv.style.display = 'block';
+        }
+
+      } catch (error) {
+        console.error('Compression error:', error);
+        errorDiv.textContent = "Error compressing PDF: " + error.message;
+        errorDiv.style.display = 'block';
+      } finally {
+        loadingDiv.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>

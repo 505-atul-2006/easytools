@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF to JPEG Converter</title>
+  <style>
+    :root {
+      --bg: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      --fg: #222;
+      --box: #ffffffee;
+    }
+    [data-theme="dark"] {
+      --bg: linear-gradient(135deg, #232526, #414345);
+      --fg: #f1f1f1;
+      --box: #1e1e1e;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.5s ease, color 0.5s ease;
+      padding: 20px;
+    }
+    .container {
+      background: var(--box);
+      border-radius: 20px;
+      padding: 30px 20px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      text-align: center;
+    }
+    input[type=file] {
+      display: block;
+      margin: 15px auto;
+      padding: 10px;
+    }
+    button {
+      padding: 12px 25px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background-color: #c82333;
+    }
+    .download-links {
+      margin-top: 20px;
+    }
+    .download-links a {
+      display: block;
+      margin: 5px auto;
+      color: #007bff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .toggle-theme {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: 2px solid var(--fg);
+      color: var(--fg);
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <button class="toggle-theme" onclick="toggleTheme()">Dark mode</button>
+  <div class="container">
+    <h2>📄 PDF to JPEG Converter</h2>
+    <p><strong>Note:</strong> This uses PDF.js to convert PDF pages to images. May not work in all browsers.</p>
+    <input type="file" id="pdfInput" accept="application/pdf"><br>
+    <button onclick="convertPDFtoImages()">Convert</button>
+    <div class="download-links" id="downloadLinks"></div>
+  </div>
+
+  <canvas id="canvas" style="display:none"></canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.min.js"></script>
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    }
+
+    async function convertPDFtoImages() {
+      const file = document.getElementById('pdfInput').files[0];
+      if (!file) return alert("Please upload a PDF file");
+
+      const reader = new FileReader();
+      reader.onload = async function (e) {
+        const typedarray = new Uint8Array(e.target.result);
+
+        const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const downloadLinks = document.getElementById('downloadLinks');
+        downloadLinks.innerHTML = "";
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 2 });
+
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+
+          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+          const imgData = canvas.toDataURL('image/jpeg');
+          const link = document.createElement('a');
+          link.href = imgData;
+          link.download = `page-${pageNum}.jpg`;
+          link.textContent = `Download Page ${pageNum}`;
+          downloadLinks.appendChild(link);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  </script>
+</body>
+</html>

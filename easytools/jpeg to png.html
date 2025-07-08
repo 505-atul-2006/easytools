@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JPEG to PNG</title>
+  <style>
+    :root {
+      --bg: linear-gradient(135deg, #e0eafc, #cfdef3);
+      --fg: #222;
+      --box: #ffffffee;
+    }
+    [data-theme="dark"] {
+      --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      --fg: #f8f9fa;
+      --box: #1e1e1e;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+    .container {
+      background: var(--box);
+      border-radius: 20px;
+      padding: 40px 30px;
+      max-width: 600px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+    .drop-zone {
+      border: 2px dashed var(--fg);
+      padding: 40px 20px;
+      margin: 15px 0;
+      border-radius: 10px;
+      background: transparent;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+    .drop-zone:hover {
+      background-color: rgba(0,0,0,0.05);
+    }
+    input[type=file] {
+      display: none;
+    }
+    button {
+      padding: 12px 25px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 15px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #output {
+      margin-top: 20px;
+    }
+    .download-link {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+      color: #28a745;
+      text-decoration: none;
+    }
+    .toggle-theme {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: 2px solid var(--fg);
+      color: var(--fg);
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+  <button class="toggle-theme" onclick="toggleTheme()">🌓Dark mode</button>
+  <div class="container">
+    <h2>🖼️ JPEG to PNG Converter</h2>
+    <div class="drop-zone" onclick="document.getElementById('jpegInput').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+      Drag & Drop JPEGs here or click to select
+    </div>
+    <input type="file" id="jpegInput" accept="image/jpeg" multiple><br>
+    <button onclick="convertToPNG()">Convert to PNG</button>
+    <div id="output"></div>
+  </div>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('jpegInput').files = e.dataTransfer.files;
+    }
+
+    function convertToPNG() {
+      const input = document.getElementById('jpegInput');
+      const output = document.getElementById('output');
+      output.innerHTML = '';
+
+      const files = Array.from(input.files);
+      if (!files.length) return alert("Please select JPEG images.");
+
+      files.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = new Image();
+          img.onload = function () {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(function(blob) {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `image_${index + 1}.png`;
+              a.textContent = `Download image ${index + 1}`;
+              a.className = 'download-link';
+              output.appendChild(a);
+            }, 'image/png');
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+</html>

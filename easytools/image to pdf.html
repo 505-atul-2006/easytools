@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image to PDF Converter</title>
+  <style>
+    :root {
+      --bg: linear-gradient(135deg, #e0eafc, #cfdef3);
+      --fg: #333;
+      --box: #ffffffee;
+    }
+    [data-theme="dark"] {
+      --bg: linear-gradient(to right, #141e30, #243b55);
+      --fg: #f1f1f1;
+      --box: #1e1e1e;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+    .container {
+      background: var(--box);
+      border-radius: 16px;
+      padding: 40px 30px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    input[type=file] {
+      display: block;
+      margin: 15px auto;
+      padding: 10px;
+    }
+    button {
+      padding: 12px 25px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    #downloadLink {
+      display: none;
+      margin-top: 20px;
+      font-weight: bold;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .toggle-theme {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: 2px solid var(--fg);
+      color: var(--fg);
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <button class="toggle-theme" onclick="toggleTheme()">🌓Dark mode</button>
+  <div class="container">
+    <h2>🖼️ Image to PDF Converter</h2>
+    <input type="file" id="imageInput" accept="image/*" multiple><br>
+    <button onclick="convertToPDF()">Convert to PDF</button>
+    <br>
+    <a id="downloadLink">Download PDF</a>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    }
+
+    async function convertToPDF() {
+      const input = document.getElementById('imageInput');
+      const files = Array.from(input.files);
+      if (!files.length) return alert("Please select at least one image.");
+
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+      let first = true;
+
+      for (const file of files) {
+        const reader = new FileReader();
+        await new Promise((resolve) => {
+          reader.onload = function (e) {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = function () {
+              const width = pdf.internal.pageSize.getWidth();
+              const height = (img.height / img.width) * width;
+
+              if (!first) pdf.addPage();
+              pdf.addImage(img, 'JPEG', 0, 0, width, height);
+              first = false;
+              resolve();
+            }
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      const blob = pdf.output('blob');
+      const link = document.getElementById('downloadLink');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'converted.pdf';
+      link.style.display = 'inline-block';
+      link.textContent = 'Download PDF';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Compressor</title>
+  <style>
+    :root {
+      --bg: linear-gradient(135deg, #e0eafc, #cfdef3);
+      --fg: #333;
+      --box: #ffffffee;
+    }
+    [data-theme="dark"] {
+      --bg: linear-gradient(135deg, #232526, #414345);
+      --fg: #f1f1f1;
+      --box: #1e1e1e;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.5s, color 0.5s;
+      padding: 20px;
+    }
+    .container {
+      background: var(--box);
+      border-radius: 16px;
+      padding: 30px 20px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      text-align: center;
+    }
+    input[type=file], input[type=number] {
+      display: block;
+      margin: 15px auto;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 80%;
+    }
+    button {
+      padding: 12px 25px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 5px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    canvas {
+      display: none;
+    }
+    #downloadLink {
+      display: none;
+      margin-top: 20px;
+      color: #28a745;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    .toggle-theme {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: 2px solid var(--fg);
+      color: var(--fg);
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    #preview {
+      max-width: 200px;
+      max-height: 200px;
+      margin-top: 15px;
+      border-radius: 10px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+  <button class="toggle-theme" onclick="toggleTheme()">🌓 Dark mode</button>
+  <div class="container">
+    <h2>📉 Image Compressor</h2>
+    <input type="file" id="imageInput" accept="image/*"><br>
+    <label for="targetSize">🎯 Target Size (KB):</label><br>
+    <input type="number" id="targetSize" placeholder="e.g. 200"><br>
+    <button onclick="compressImage()">Compress</button>
+    <button onclick="clearPreview()">Clear</button>
+    <br>
+    <img id="preview" style="display:none" />
+    <a id="downloadLink"></a>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    }
+
+    function clearPreview() {
+      document.getElementById('preview').style.display = 'none';
+      document.getElementById('preview').src = '';
+      document.getElementById('downloadLink').style.display = 'none';
+      document.getElementById('downloadLink').href = '';
+      document.getElementById('imageInput').value = '';
+    }
+
+    function compressImage() {
+      const file = document.getElementById('imageInput').files[0];
+      const targetSizeKB = parseInt(document.getElementById('targetSize').value);
+      if (!file || !targetSizeKB) return alert("Please select an image and set target size in KB");
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function () {
+          const canvas = document.getElementById('canvas');
+          const ctx = canvas.getContext('2d');
+
+          let width = img.width;
+          let height = img.height;
+          const scale = 0.95;
+          let quality = 0.92;
+
+          function tryCompress(callback) {
+            canvas.width = width;
+            canvas.height = height;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(blob => {
+              if (blob.size / 1024 <= targetSizeKB || (quality <= 0.3 && width < 100)) {
+                callback(blob);
+              } else {
+                width *= scale;
+                height *= scale;
+                quality -= 0.05;
+                tryCompress(callback);
+              }
+            }, 'image/jpeg', quality);
+          }
+
+          tryCompress(blob => {
+            const preview = document.getElementById('preview');
+            const link = document.getElementById('downloadLink');
+            const url = URL.createObjectURL(blob);
+
+            preview.src = url;
+            preview.style.display = 'block';
+
+            link.href = url;
+            link.download = 'compressed-image.jpg';
+            link.style.display = 'inline-block';
+            link.textContent = `Download (${Math.round(blob.size / 1024)} KB)`;
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  </script>
+</body>
+</html>
+

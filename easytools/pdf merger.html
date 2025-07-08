@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Merger</title>
+  <style>
+    :root {
+      --bg: linear-gradient(135deg, #e0eafc, #cfdef3);
+      --fg: #222;
+      --box: #ffffffee;
+    }
+    [data-theme="dark"] {
+      --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      --fg: #f8f9fa;
+      --box: #1e1e1e;
+    }
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+    .container {
+      background: var(--box);
+      border-radius: 20px;
+      padding: 40px 30px;
+      max-width: 600px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+    .drop-zone {
+      border: 2px dashed var(--fg);
+      padding: 40px 20px;
+      margin: 15px 0;
+      border-radius: 10px;
+      background: transparent;
+      transition: background 0.3s;
+      cursor: pointer;
+    }
+    .drop-zone:hover {
+      background-color: rgba(0,0,0,0.05);
+    }
+    input[type=file] {
+      display: none;
+    }
+    button {
+      padding: 12px 25px;
+      background-color: #007bff;
+      color: white;
+      border: 2px solid blue;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 15px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #downloadLink {
+      display: none;
+      margin-top: 20px;
+      font-weight: bold;
+      text-decoration: none;
+      color: #28a745;
+    }
+    .toggle-theme {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: 2px solid var(--fg);
+      color: var(--fg);
+      padding: 5px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+  <button class="toggle-theme" onclick="toggleTheme()">🌓 Dark mode</button>
+  <div class="container">
+    <h2>📎 PDF Merger</h2>
+    <label for="pdfInput">Select multiple PDF files:</label><br>
+    <div class="drop-zone" onclick="document.getElementById('pdfInput').click()" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+      Drag & Drop PDFs here or click to select
+    </div>
+    <input type="file" id="pdfInput" accept="application/pdf" multiple><br>
+    <button onclick="mergePDFs()">Merge PDFs</button>
+    <a id="downloadLink">Download Merged PDF</a>
+  </div>
+
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script>
+    function toggleTheme() {
+      const html = document.documentElement;
+      html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('pdfInput').files = e.dataTransfer.files;
+    }
+
+    async function mergePDFs() {
+      const input = document.getElementById('pdfInput');
+      const files = input.files;
+      if (!files.length) return alert("Please select PDF files.");
+
+      const mergedPdf = await PDFLib.PDFDocument.create();
+
+      for (const file of files) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        copiedPages.forEach(page => mergedPdf.addPage(page));
+      }
+
+      const pdfBytes = await mergedPdf.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const link = document.getElementById('downloadLink');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'merged.pdf';
+      link.style.display = 'inline-block';
+      link.textContent = 'Download Merged PDF';
+    }
+  </script>
+</body>
+</html>
